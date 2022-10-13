@@ -1,15 +1,17 @@
 <network>
   <name>{{ .Name }}</name>
   <bridge name="virbr0"/>
-  {{ if .Internal != true }}<forward mode="nat"/>{{ end }}
+  {{- if not .Internal }}
+  <forward mode="nat"/>
+  {{- end }}
   <ip address="{{ .Address }}" netmask="{{ .Mask }}">
-  {{ if .DHCP }}
+  {{- if .DHCP }}
     <dhcp>
       <range start="{{ .DHCP.Start }}" end="{{ .DHCP.End }}"/>
-      {{ range .DHCP.Hosts }}
+      {{- range .DHCP.Hosts }}
         <host mac="{{ .MAC }}" ip="{{ .IP }}" />
-      {{ end }}
+      {{- end }}
     </dhcp>
-  {{ end }}
+  {{- end }}
   </ip>
 </network>

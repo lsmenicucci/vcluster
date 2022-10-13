@@ -1,15 +1,19 @@
-package main 
+package main
 
 import (
-	"log"
 	"net"
+	"net/netip"
 	"time"
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/lsmenicucci/simlab-vcluster/pkg"
+	"github.com/sirupsen/logrus"
 )
 
 func main(){
+	log := logrus.New()
+	logrus.SetLevel(logrus.DebugLevel)
+
 	c, err := net.DialTimeout("unix", "/var/run/libvirt/libvirt-sock", 2*time.Second)
 	if err != nil {
 		log.Fatalf("failed to dial libvirt: %v", err)
@@ -29,14 +33,24 @@ func main(){
 		log.Println(dom.Name)
 	}
 
-	ncfg := pkg.NodeConfig{
-		Name:"gotest-head",
-		Memory: 2,
-		Cpus: 4,
-		Disk: &pkg.DiskConfig{ Name: "gotest-hed", Pool: "gotest" },
-		Cdrom: nil,
-		Networks: []pkg.NetworkDeviceConfig{},
+	cluster := &pkg.ClusterConfig{
+		Prefix: "gotest",
+		BaseDir: "/home/lsmeni/projetos/simlab-vcluster/test",
+		NumWorkers: 2,
+		Worker: pkg.ClusterWorkers{ CPUS: 1, Memory: 2, DiskSize: 1 },
+		Controller: pkg.ClusterController{ CPUS: 1, Memory: 2, DiskSize: 1, InstallationISO: ""},
+		Networks: pkg.ClusterNetworks{
+			Internal: pkg.ClusterNetworkConfig{ Address: netip.MustParsePrefix("10.0.2.1/24") },
+			External: pkg.ClusterNetworkConfig{ Address: netip.MustParsePrefix("10.0.2.1/24") },
+		},
 	}
 
-	pkg.DefineNode(l, ncfg, true)
+	err = pkg.SetupPool(l, cluster, true)
+	if (err != nil){
+		log.Error(err)
+	}
+	err = pkg.SetupVolumes(l, cluster, true)
+	if (err != nil){
+		log.Error(err)
+	}
 }

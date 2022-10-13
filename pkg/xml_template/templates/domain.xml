@@ -2,7 +2,7 @@
 <domain type="qemu">
   <name>{{ .Name }}</name>
   <memory unit="GiB">{{ .Memory }}</memory>
-  <vcpu>{{ .Cpus }}</vcpu>
+  <vcpu>{{ .CPUS }}</vcpu>
   <os>
     <type arch="x86_64">hvm</type>
   </os>
@@ -13,20 +13,20 @@
       <target dev='vda' bus='virtio'/>
       <boot order="1"/>
     </disk>
-  {{ if .Cdrom }}
+  {{- if .Cdrom -}}
     <disk type="file" device="cdrom">
       <source file="{{ .Cdrom.ImagePath }}"/>
       <target dev="hdc"/>
       <boot order="2"/>
       <readonly/>
     </disk>
-  {{ end }}
+  {{- end -}}
   {{ range .Networks }}
     <interface type="network">
       <source network="{{ .Name }}"/>
       <model type="virtio"/>
     </interface>
-  {{ end }}
+  {{- end }}
     <graphics type="vnc" port="-1"/>
   </devices>
 </domain>

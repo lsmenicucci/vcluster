@@ -21,7 +21,7 @@ type NetworkDeviceConfig struct{
 type NodeConfig struct{
 	Name string
 	Memory int
-	Cpus int 
+	CPUS int 
 
 	Disk *DiskConfig
 	Cdrom *CdromConfig 

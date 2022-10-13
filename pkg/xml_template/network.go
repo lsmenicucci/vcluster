@@ -7,8 +7,8 @@ import (
 )
 
 type DHCPHost struct{
-	MAC netip.Addr
-	IP netip.Addr
+	MAC string
+	IP string
 }
 
 type DHCPConfig struct{
