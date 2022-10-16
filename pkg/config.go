@@ -3,11 +3,15 @@ package pkg
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/netip"
 	"os"
 
+	"github.com/invopop/jsonschema"
 	"github.com/lsmenicucci/simlab-vcluster/pkg/xml_template"
+	log "github.com/sirupsen/logrus"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 type ClusterWorkers struct{
@@ -24,7 +28,7 @@ type ClusterController struct{
 }
 
 type ClusterNetworkConfig struct{
-	Address netip.Prefix `json:"address"`
+	Address string `json:"address"`
 }
 
 type ClusterNetworks struct{
@@ -34,7 +38,7 @@ type ClusterNetworks struct{
 
 type ClusterConfig struct{
 	Prefix 				string 						`json:"prefix"`
-	NumWorkers			int 						`json:"workers"`
+	NumWorkers			int 						`json:"workers_count"`
 	BaseDir   			string 						`json:"base_dir"`
 	Worker  			ClusterWorkers 				`json:"worker_config"`
 	Controller 			ClusterController			`json:"controller_config"`
@@ -43,16 +47,45 @@ type ClusterConfig struct{
 
 
 func (c * ClusterConfig) LoadFromFile(filepath string) error{
-	raw, err := os.ReadFile(filepath)
+	log := log.WithField("file", filepath)
 
+	raw, err := os.ReadFile(filepath)
 	if (err != nil){
 		return err
+	}
+
+	// Loading data schema
+	log.Debug("Loading data schema")
+	schema := jsonschema.Reflect(c)
+	schemaDump, err := json.Marshal(schema)
+	if (err != nil){
+		log.WithError(err).Debug("Unexpected error while validating file content")
+		return err
+	}
+
+	// validate json file
+	log.Debug("Validating file content")
+	schemaLoader := gojsonschema.NewStringLoader(string(schemaDump))
+	docLoader := gojsonschema.NewBytesLoader(raw)
+
+	result, err := gojsonschema.Validate(schemaLoader, docLoader)
+	if (err != nil){
+		log.WithError(err).Debug("Unexpected error while validating file content")
+		return err
+	}
+
+	if (result.Valid() == false){
+		for _, desc := range result.Errors(){
+			log.Infof("Schema error: %s", desc)
+		}
+		return errors.New("Invalid config file")
 	}
 
 	err = json.Unmarshal(raw, c)
 	if (err != nil){
 		return err
 	}
+
 
 	return nil
 }
@@ -76,6 +109,14 @@ func (c *ClusterConfig) GetWorkerDiskName(index int)string{
 
 func (c *ClusterConfig) GetStoragePoolName()string{
 	return c.Prefix
+}
+
+func (c *ClusterConfig) GetInternalNetworkName() string{
+	return fmt.Sprintf("%s-internal", c.Prefix)
+}
+
+func (c *ClusterConfig) GetExternalNetworkName() string{
+	return fmt.Sprintf("%s-external", c.Prefix)
 }
 
 func (c *ClusterConfig) BuildControllerXML() (string, error){
@@ -145,29 +186,39 @@ func (c *ClusterConfig) BuildWorkerDiskXML(index int) (string, error){
 }
 
 func (c *ClusterConfig) BuildInternalNetworkXML() (string, error){
+	net_addr, err := netip.ParsePrefix(c.Networks.Internal.Address)
+	if (err != nil){
+		return "", err
+	}
+
 	cfg := xml_template.NetworkConfig{
 		Name: c.Prefix + "-internal",
 		Internal: true,
-		Address: c.Networks.Internal.Address.Addr(),
+		Address: net_addr.Addr(),
 		Mask: netip.MustParseAddr("255.255.255.0"),
 	}
 
 	buf := new(bytes.Buffer)
-	err := xml_template.NetworkXML.Execute(buf, cfg)
+	err = xml_template.NetworkXML.Execute(buf, cfg)
 
 	return buf.String(), err
 }
 
 func (c *ClusterConfig) BuildExternalNetworkXML(hostMacs map[string]string) (string, error){
+	net_addr, err := netip.ParsePrefix(c.Networks.External.Address)
+	if (err != nil){
+		return "", err
+	}
+
 	cfg := xml_template.NetworkConfig{
 		Name: c.Prefix + "-external",
 		Internal: false,
-		Address: c.Networks.Internal.Address.Addr(),
+		Address: net_addr.Addr(),
 		Mask: netip.MustParseAddr("255.255.255.0"),
 		DHCP: &xml_template.DHCPConfig{},
 	}
 
-	cfg.DHCP.Start, cfg.DHCP.End = getAddrRange(c.Networks.External.Address)
+	cfg.DHCP.Start, cfg.DHCP.End = getAddrRange(net_addr)
 
 	for ip, mac := range hostMacs{
 		hostCfg := xml_template.DHCPHost{ MAC: mac, IP: ip }
@@ -175,7 +226,7 @@ func (c *ClusterConfig) BuildExternalNetworkXML(hostMacs map[string]string) (str
 	}
 
 	buf := new(bytes.Buffer)
-	err := xml_template.NetworkXML.Execute(buf, cfg)
+	err = xml_template.NetworkXML.Execute(buf, cfg)
 
 	return buf.String(), err
 }

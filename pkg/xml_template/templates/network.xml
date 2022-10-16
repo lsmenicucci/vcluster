@@ -1,6 +1,5 @@
 <network>
   <name>{{ .Name }}</name>
-  <bridge name="virbr0"/>
   {{- if not .Internal }}
   <forward mode="nat"/>
   {{- end }}

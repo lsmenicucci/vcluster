@@ -94,7 +94,6 @@ func SetupVolumes(l *libvirt.Libvirt, c *ClusterConfig, skip_existing bool) erro
 		return err
 	}
 
-
 	// define controller volume
 	log.Debug("Generating controller disk XML")
 	diskXml, err := c.BuildControllerDiskXML()
@@ -124,12 +123,4 @@ func SetupVolumes(l *libvirt.Libvirt, c *ClusterConfig, skip_existing bool) erro
 	}
 
 	return nil
-}
-
-func SetupNetworks(l, c *ClusterConfig, overwrite bool){
-
-}
-
-func SetupCluster(c *ClusterConfig){
-
 }
