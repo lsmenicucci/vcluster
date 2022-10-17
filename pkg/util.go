@@ -8,7 +8,8 @@ import (
 	"github.com/digitalocean/go-libvirt"
 	"github.com/sirupsen/logrus"
 	"github.com/lsmenicucci/simlab-vcluster/pkg/components"
-	"github.com/r3labs/diff"
+
+	"github.com/kr/pretty"
 )
 
 func getAddrRange(prefix netip.Prefix) (netip.Addr, netip.Addr){
@@ -42,20 +43,19 @@ func DialLibvirt() (*libvirt.Libvirt, error){
 }
 
 func Test(l *libvirt.Libvirt) {
-	cfg := &components.Node{
+	cfg := &components.StoragePool{
 		Name: "gotest",
-		Memory: 1,
-		CPUS: 4,
-		Disk: &components.DiskConfig{ Pool: "images", Name: "head.img" },
-		Networks: []*components.NetworkDeviceConfig{},
+		Path: "/home/lsmeni/projetos/simlab-vcluster/test-cluster",
 	}
 
-	components.SetNode(l, cfg)
-	n, err := components.GetNode(l, "gotest")
+	components.SetStoragePool(l, cfg)
+	_, err := components.GetStoragePool(l, "gotest")
 
 	if (err != nil){
 		logrus.WithError(err).Info("Error")
 	}
 
-	logrus.Info(diff.Diff(cfg, n))
+	c := &Cluster{}
+	c.LoadCluster(l, "gotest")
+	logrus.Printf("%# v", pretty.Formatter(c))
 }

@@ -70,10 +70,6 @@ func GetStoragePool(l *libvirt.Libvirt, name string) (*StoragePool, error){
 		return nil, err
 	}
 
-	if (&nobj != nil){
-		nobj = nobj
-	}
-
 	// load network data
 	nxml, err := l.StoragePoolGetXMLDesc(nobj, 0)
 	log.Debug("Parsing pool XML:\n"+nxml)

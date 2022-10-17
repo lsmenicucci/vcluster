@@ -17,22 +17,22 @@ var NetworkXMLTemplate string
 var NetworkXML = template.Must(template.New("network").Parse(NetworkXMLTemplate))
 
 type DHCPHost struct{
-	MAC string
-	IP 	string
+	MAC string `json:"mac"`
+	IP 	string `json:"ip"`
 }
 
 type DHCPConfig struct{
-	Start 	netip.Addr
-	End 	netip.Addr
-	Hosts 	[]DHCPHost
+	Start 	netip.Addr 	`json:"start"`
+	End 	netip.Addr 	`json:"end"`
+	Hosts 	[]DHCPHost 	`json:"hosts"`
 }
 
 type Network struct{
-	Name 		string
-	Internal 	bool
-	Address 	netip.Addr
-	Mask 		netip.Addr
-	DHCP 		*DHCPConfig
+	Name 		string 		`json:"name"`
+	Internal 	bool 		`json:"internal"`
+	Address 	netip.Addr 	`json:"address"`
+	Mask 		netip.Addr 	`json:"mask"`
+	DHCP 		*DHCPConfig `json:"dhcp"`
 }
 
 func (ns *Network) GetXPaths() map[string]string{
@@ -106,10 +106,6 @@ func GetNetwork(l *libvirt.Libvirt, name string) (*Network, error){
 		return nil, err
 	}
 
-	if (&nobj != nil){
-		nobj = nobj
-	}
-
 	// load network data
 	nxml, err := l.NetworkGetXMLDesc(nobj, 0)
 	log.Debug("Parsing network XML:\n"+nxml)
@@ -123,7 +119,7 @@ func GetNetwork(l *libvirt.Libvirt, name string) (*Network, error){
 	return state, nil
 }
 
-func Set(l *libvirt.Libvirt, cfg *Network) error{
+func SetNetwork(l *libvirt.Libvirt, cfg *Network) error{
 	buf := new(bytes.Buffer)
 	err := NetworkXML.Execute(buf, cfg)
 	if (err != nil){
@@ -138,4 +134,19 @@ func Set(l *libvirt.Libvirt, cfg *Network) error{
 	}
 
 	return nil
+}
+
+
+func ListNetworksNames(l *libvirt.Libvirt) ([]string, error){
+	networks, _, err :=  l.ConnectListAllNetworks(1, 0)
+	if (err != nil){
+		return []string{}, err
+	}
+
+	netNames := make([]string, len(networks))
+	for k, n := range networks{
+		netNames[k] = n.Name
+	}
+
+	return netNames, nil
 }

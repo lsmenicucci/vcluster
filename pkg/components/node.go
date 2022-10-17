@@ -17,26 +17,26 @@ var NodeXMLTemplate string
 var NodeXML = template.Must(template.New("node").Parse(NodeXMLTemplate))
 
 type DiskConfig struct{
-	Pool string
-	Name string
+	Pool string `json:"pool"`
+	Name string `json:"name"`
 }
 
 type CdromConfig struct{
-	ImagePath string
+	ImagePath string 	`json:"iso_path"`
 }
 
 type NetworkDeviceConfig struct{
-	Name string
+	Name string 			`json:"name"`
 }
 
 type Node struct{
-	Name string
-	Memory int
-	CPUS int 
+	Name 		string 		`json:"name"`
+	Memory 		int 		`json:"memory"`
+	CPUS 		int 		`json:"cpus"`
 
-	Disk *DiskConfig
-	Cdrom *CdromConfig 
-	Networks []*NetworkDeviceConfig
+	Disk 		*DiskConfig 			`json:"disk"`
+	Cdrom 		*CdromConfig 			`json:"cdrom"`
+	Networks	[]*NetworkDeviceConfig 	`json:"networks"`
 }
 
 func (ns *Node) GetXPaths() map[string]string{
@@ -168,4 +168,18 @@ func SetNode(l *libvirt.Libvirt, cfg *Node) error{
 	}
 
 	return nil
+}
+
+func ListNodesNames(l *libvirt.Libvirt) ([]string, error){
+	nodes, _, err :=  l.ConnectListAllDomains(1, 0)
+	if (err != nil){
+		return []string{}, err
+	}
+
+	nodesNames := make([]string, len(nodes))
+	for k, n := range nodes{
+		nodesNames[k] = n.Name
+	}
+
+	return nodesNames, nil
 }
