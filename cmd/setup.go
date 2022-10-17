@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"os"
-	
+
 	"github.com/lsmenicucci/simlab-vcluster/pkg"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -56,19 +56,16 @@ func run(cmd *cobra.Command, args []string){
 		log.Fatalf("%s is a directory", args[0])
 	}
 
-	cfg := &pkg.ClusterConfig{}
-	err = cfg.LoadFromFile(args[0])
-	if (err != nil){
-		log.Logger.WithError(err).Fatal("Error loading configuration file")
-	}
+	// cfg := &pkg.ClusterConfig{}
+	// err = cfg.LoadFromFile(args[0])
+	// if (err != nil){
+	// 	log.Logger.WithError(err).Fatal("Error loading configuration file")
+	// }
 
 	l, err := pkg.DialLibvirt()
 	if (err != nil){
 		log.WithError(err).Fatalf("Could not dial to libvirt's daemon")
 	}
 
-	err = pkg.SetupAll(l, cfg, true)
-	if (err != nil){
-		log.WithError(err).Fatal("Failed setting up")
-	}
+	pkg.Test(l)
 }

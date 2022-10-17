@@ -7,6 +7,8 @@ import (
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/sirupsen/logrus"
+	"github.com/lsmenicucci/simlab-vcluster/pkg/components"
+	"github.com/r3labs/diff"
 )
 
 func getAddrRange(prefix netip.Prefix) (netip.Addr, netip.Addr){
@@ -37,4 +39,23 @@ func DialLibvirt() (*libvirt.Libvirt, error){
 	}
 
 	return l, nil
+}
+
+func Test(l *libvirt.Libvirt) {
+	cfg := &components.Node{
+		Name: "gotest",
+		Memory: 1,
+		CPUS: 4,
+		Disk: &components.DiskConfig{ Pool: "images", Name: "head.img" },
+		Networks: []*components.NetworkDeviceConfig{},
+	}
+
+	components.SetNode(l, cfg)
+	n, err := components.GetNode(l, "gotest")
+
+	if (err != nil){
+		logrus.WithError(err).Info("Error")
+	}
+
+	logrus.Info(diff.Diff(cfg, n))
 }

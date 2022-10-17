@@ -1,4 +1,4 @@
-package xml_template
+package components
 
 import (
 	_ "embed"
