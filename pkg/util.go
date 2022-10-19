@@ -7,7 +7,7 @@ import (
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/sirupsen/logrus"
-	"github.com/lsmenicucci/simlab-vcluster/pkg/components"
+	"github.com/lsmenicucci/vcluster/pkg/components"
 
 	"github.com/kr/pretty"
 )

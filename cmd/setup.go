@@ -6,7 +6,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/lsmenicucci/simlab-vcluster/pkg"
+	"github.com/lsmenicucci/vcluster/pkg"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

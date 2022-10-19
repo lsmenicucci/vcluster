@@ -1,4 +1,4 @@
-module github.com/lsmenicucci/simlab-vcluster
+module github.com/lsmenicucci/vcluster
 
 go 1.19
 

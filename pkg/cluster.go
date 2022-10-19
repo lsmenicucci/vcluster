@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/digitalocean/go-libvirt"
-	"github.com/lsmenicucci/simlab-vcluster/pkg/components"
+	"github.com/lsmenicucci/vcluster/pkg/components"
 )
 
 type Cluster struct{
